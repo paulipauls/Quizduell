@@ -1,0 +1,749 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Quizduell</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js"></script>
+<style>
+:root{
+  --bg:#E9ECFF;--surface:#FFFFFF;--ink:#161A4D;--muted:#565C90;--line:#CDD2F5;
+  --brand:#3A2FD9;--brand-deep:#251C9E;--brand-ink:#FFFFFF;
+  --a1:#E23F48;--a2:#F5A524;--a3:#10916B;--a4:#2C6FDC;
+  --a1-ink:#FFFFFF;--a2-ink:#2A1B00;--a3-ink:#FFFFFF;--a4-ink:#FFFFFF;
+  --good:#10916B;--bad:#E23F48;
+  --display:"Bricolage Grotesque",ui-rounded,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --body:"Figtree",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0F1236;--surface:#1A1E4E;--ink:#EEF0FF;--muted:#A3A8D6;--line:#30357A;
+    --brand:#6A5FFF;--brand-deep:#3F35C2;--brand-ink:#FFFFFF;
+    --a1:#EF4F58;--a2:#F7B23A;--a3:#1AA77E;--a4:#3B7EEA;
+    --good:#2BC08F;--bad:#EF4F58;color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh}
+.wrap{max-width:820px;margin:0 auto;padding:18px 20px 64px}
+.bar{display:flex;align-items:center;gap:12px;padding:4px 0 22px;flex-wrap:wrap}
+.spacer{flex:1}
+.logo{font-family:var(--display);font-weight:800;font-size:1.35rem;letter-spacing:-.02em;display:flex;align-items:center;gap:9px}
+.logo i{display:inline-grid;grid-template-columns:repeat(2,9px);gap:3px}
+.logo i b{width:9px;height:9px;border-radius:3px;display:block}
+.logo i b:nth-child(1){background:var(--a1)}.logo i b:nth-child(2){background:var(--a2)}
+.logo i b:nth-child(3){background:var(--a3)}.logo i b:nth-child(4){background:var(--a4)}
+.roomtag{font-weight:700;color:var(--muted)}
+.roomtag b{color:var(--ink);font-family:var(--display);letter-spacing:.08em}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(2.2rem,6.4vw,3.7rem);line-height:1.02;letter-spacing:-.03em;margin:10px 0 14px;max-width:15ch}
+h2{font-family:var(--display);font-weight:800;font-size:1.5rem;letter-spacing:-.015em;margin:0 0 10px;line-height:1.15}
+h3{font-size:1rem;margin:28px 0 10px}
+p{margin:0 0 12px}
+.muted{color:var(--muted)}
+.lead{font-size:1.15rem;max-width:50ch}
+.center{text-align:center}
+.split{display:grid;grid-template-columns:1.15fr 1fr;gap:16px;margin-top:28px}
+@media (max-width:660px){.split{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:2px solid var(--line);border-radius:22px;padding:22px}
+label{display:block;font-weight:700;font-size:.95rem;margin:0 0 14px}
+input[type=text],textarea,select{display:block;width:100%;margin-top:6px;font:inherit;font-weight:500;color:var(--ink);background:var(--bg);border:2px solid var(--line);border-radius:12px;padding:11px 13px}
+textarea{resize:vertical;min-height:64px}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--brand)}
+:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+.codeinput{font-family:var(--display)!important;font-weight:800!important;font-size:1.8rem!important;letter-spacing:.3em;text-transform:uppercase;text-align:center}
+.btn{font:inherit;font-weight:700;border:0;border-radius:14px;padding:13px 22px;background:var(--brand);color:var(--brand-ink);cursor:pointer;box-shadow:0 4px 0 var(--brand-deep);transition:transform .08s,box-shadow .08s}
+.btn:active:not([disabled]){transform:translateY(3px);box-shadow:0 1px 0 var(--brand-deep)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:var(--surface);color:var(--ink);border:2px solid var(--line);box-shadow:0 4px 0 var(--line)}
+.btn.small{padding:8px 14px;font-size:.92rem}
+.btn.wide{width:100%}
+.linkbtn{font:inherit;background:none;border:0;color:var(--muted);font-weight:700;cursor:pointer;padding:6px 10px;border-radius:8px}
+.linkbtn:hover{color:var(--ink)}
+.linkbtn[disabled]{opacity:.4;cursor:not-allowed}
+.notice{border-radius:14px;padding:12px 16px;margin:16px 0;font-weight:500;background:color-mix(in srgb,var(--bad) 13%,var(--surface));border:2px solid color-mix(in srgb,var(--bad) 45%,transparent)}
+.notice.info{background:color-mix(in srgb,var(--brand) 12%,var(--surface));border-color:color-mix(in srgb,var(--brand) 40%,transparent)}
+.codebig{display:flex;gap:10px;justify-content:center;margin:18px 0 14px;flex-wrap:wrap}
+.codebig span{--c:var(--a1);font-family:var(--display);font-weight:800;font-size:clamp(2.5rem,11vw,5rem);width:1.2em;height:1.4em;display:grid;place-items:center;background:var(--surface);border:2px solid var(--line);border-radius:16px;box-shadow:0 7px 0 var(--c)}
+.codebig span:nth-child(4n+2){--c:var(--a2)}.codebig span:nth-child(4n+3){--c:var(--a3)}.codebig span:nth-child(4n+4){--c:var(--a4)}
+.joinlink{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;margin:6px 0 4px}
+.joinlink code{background:var(--surface);border:2px solid var(--line);border-radius:10px;padding:7px 12px;font-size:.92rem;overflow-wrap:anywhere}
+.chips{display:flex;flex-wrap:wrap;gap:8px;list-style:none;padding:0;margin:0}
+.chips li{background:var(--surface);border:2px solid var(--line);border-radius:999px;padding:6px 14px;font-weight:700;overflow-wrap:anywhere}
+.chips li.me{border-color:var(--brand)}
+.chips li.off{opacity:.5;border-style:dashed}
+.controls{position:sticky;bottom:12px;margin-top:28px;padding:12px 14px;background:var(--surface);border:2px solid var(--line);border-radius:18px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.controls .info{flex:1;min-width:160px;font-weight:700}
+.qmeta{display:flex;align-items:center;gap:14px;margin-bottom:10px;font-weight:700;color:var(--muted)}
+.timer{margin-left:auto;font-family:var(--display);font-weight:800;font-size:1.7rem;color:var(--ink);min-width:2ch;text-align:right}
+.timebar{height:10px;background:var(--line);border-radius:99px;overflow:hidden;margin-bottom:22px}
+.timebar i{display:block;height:100%;background:var(--brand);border-radius:99px;transition:width .2s linear}
+.timebar.low i{background:var(--a1)}
+.question{font-size:clamp(1.6rem,4.4vw,2.5rem);line-height:1.12;margin:0 0 24px;max-width:28ch;overflow-wrap:anywhere}
+.answers{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:560px){.answers{grid-template-columns:1fr}}
+.ans{--c:var(--a1);--ci:var(--a1-ink);display:flex;align-items:center;gap:14px;min-height:92px;padding:14px 16px;border:0;border-radius:18px;background:var(--c);color:var(--ci);font:inherit;font-weight:700;font-size:1.15rem;line-height:1.25;text-align:left;box-shadow:0 5px 0 color-mix(in srgb,var(--c) 62%,#000);cursor:pointer;transition:opacity .25s,transform .08s;overflow-wrap:anywhere}
+.ans:nth-child(2){--c:var(--a2);--ci:var(--a2-ink)}
+.ans:nth-child(3){--c:var(--a3);--ci:var(--a3-ink)}
+.ans:nth-child(4){--c:var(--a4);--ci:var(--a4-ink)}
+button.ans[disabled]{cursor:default}
+button.ans:active:not([disabled]){transform:translateY(3px);box-shadow:0 2px 0 color-mix(in srgb,var(--c) 62%,#000)}
+.ans .letter{flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:color-mix(in srgb,var(--ci) 20%,transparent);font-family:var(--display);font-weight:800}
+.ans .txt{flex:1}
+.ans .count{font-family:var(--display);font-weight:800;font-size:1.5rem;flex:none}
+.ans.dim{opacity:.3}
+.ans.picked{outline:4px solid var(--ink);outline-offset:3px}
+.ans.correct{outline:5px solid var(--good);outline-offset:3px}
+.status{margin-top:22px;font-weight:700;font-size:1.1rem}
+.result{border-radius:20px;padding:16px 20px;margin-top:24px;font-family:var(--display);font-weight:800;font-size:1.6rem;border:2px solid transparent}
+.result.good{background:color-mix(in srgb,var(--good) 16%,var(--surface));border-color:color-mix(in srgb,var(--good) 50%,transparent)}
+.result.bad{background:color-mix(in srgb,var(--bad) 13%,var(--surface));border-color:color-mix(in srgb,var(--bad) 45%,transparent)}
+.board{list-style:none;padding:0;margin:0;display:grid;gap:8px}
+.board li{display:grid;grid-template-columns:2.2em 1fr auto;align-items:center;gap:12px;background:var(--surface);border:2px solid var(--line);border-radius:14px;padding:10px 16px}
+.board li.me{border-color:var(--brand)}
+.board .rank{font-family:var(--display);font-weight:800;font-size:1.3rem;color:var(--muted)}
+.board .name{font-weight:700;min-width:0;overflow-wrap:anywhere}
+.board .sub{display:block;font-weight:500;color:var(--muted);font-size:.88rem}
+.board .pts{font-family:var(--display);font-weight:800;font-size:1.3rem}
+.podium{display:grid;grid-template-columns:repeat(3,1fr);align-items:end;gap:10px;margin:18px 0 28px}
+.podium > div{text-align:center;min-width:0}
+.podium .pname{font-weight:700;margin-bottom:2px;overflow-wrap:anywhere}
+.podium .ppts{color:var(--muted);font-weight:700;font-size:.9rem;margin-bottom:8px}
+.podium .block{border-radius:14px 14px 0 0;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:2.2rem;color:#fff}
+.podium .p1 .block{height:150px;background:var(--a2);color:var(--a2-ink)}
+.podium .p2 .block{height:110px;background:var(--a4)}
+.podium .p3 .block{height:80px;background:var(--a1)}
+.setuphead{display:grid;grid-template-columns:1fr 170px;gap:12px}
+@media (max-width:520px){.setuphead{grid-template-columns:1fr}}
+.qcard{margin-top:14px}
+.qcard .top{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.qcard .top strong{font-family:var(--display);font-size:1.15rem}
+.arow{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;margin-top:8px}
+.arow input[type=radio]{width:22px;height:22px;accent-color:var(--good);margin:0}
+.arow input[type=text]{margin-top:0}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main class="wrap" id="app"></main>
+<script>
+/* =========================================================
+   Quizduell – läuft komplett im Browser.
+   Der Spielleiter-Browser ist der "Server", Mitspieler
+   verbinden sich per WebRTC (PeerJS) direkt mit ihm.
+   ========================================================= */
+const PEER_PREFIX = 'quizduell-v1-';          // macht die Raum-IDs auf dem PeerJS-Server eindeutig
+const LETTERS = ['A','B','C','D'];
+const CODE_ALPHA = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const PEER_OPTS = { debug: 1 };
+const DEFAULT_QUESTIONS = [
+  {q:'Welcher Planet ist der Sonne am nächsten?', a:['Merkur','Venus','Mars','Erde'], c:0},
+  {q:'Wie viele Bundesländer hat Deutschland?', a:['14','15','16','17'], c:2},
+  {q:'Wer malte die Mona Lisa?', a:['Michelangelo','Leonardo da Vinci','Raffael','Botticelli'], c:1},
+  {q:'Welches ist das größte Organ des Menschen?', a:['Leber','Lunge','Haut','Gehirn'], c:2},
+  {q:'In welchem Jahr fiel die Berliner Mauer?', a:['1987','1989','1990','1991'], c:1},
+  {q:'Für welches Element steht das Symbol Fe?', a:['Fluor','Eisen','Blei','Zinn'], c:1},
+  {q:'Wie heißt die Hauptstadt von Australien?', a:['Sydney','Melbourne','Canberra','Perth'], c:2},
+  {q:'Wie viele Beine hat eine Spinne?', a:['6','8','10','12'], c:1}
+];
+
+const $app = document.getElementById('app');
+function esc(s){return String(s ?? '').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+function store(k,v){try{ if(v==null) localStorage.removeItem(k); else localStorage.setItem(k,JSON.stringify(v)); }catch(e){}}
+function load(k){try{const v=localStorage.getItem(k); return v?JSON.parse(v):null;}catch(e){return null;}}
+function clone(o){return JSON.parse(JSON.stringify(o));}
+function rid(n){const b=new Uint32Array(n);crypto.getRandomValues(b);return [...b].map(x=>CODE_ALPHA[x%CODE_ALPHA.length]).join('');}
+const now = () => Date.now();
+
+const urlCode = (new URLSearchParams(location.search).get('code')||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,5);
+
+/* ---------- globaler UI-Zustand ---------- */
+const S = {
+  view: 'home',            // home | setup | host | player
+  msg: '', info: '', busy: false,
+  joinCode: urlCode, joinName: load('qd:name') || '',
+  setup: load('qd:setup') || {title:'Unser Quiz', time:20, questions:clone(DEFAULT_QUESTIONS)},
+  focusSel: urlCode ? '[data-bind="joinName"]' : null
+};
+let H = null;   // Spielleiter-Daten
+let P = null;   // Mitspieler-Daten
+
+/* ---------- Punkte ---------- */
+function qPoints(a, correct, limit){
+  if (!a || a.c !== correct) return 0;
+  return 500 + Math.round(500 * Math.max(0, 1 - a.ms/(limit*1000)));
+}
+
+/* =========================================================
+   SPIELLEITER
+   ========================================================= */
+function hostScores(){
+  return Object.entries(H.players).map(([id,p]) => {
+    let s=0, correct=0;
+    for (const [qi,c] of Object.entries(H.room.revealed)) {
+      const pts = qPoints(p.answers[qi], c, H.room.timeLimit);
+      if (pts>0){ s+=pts; correct++; }
+    }
+    return {id, nick:p.nick, connected:!!H.conns[id], joinedAt:p.joinedAt, s, correct};
+  });
+}
+
+/* Baut den Zustand, den ein Mitspieler (pid) bzw. der Spielleiter (pid=null) sehen darf.
+   Es wird nur die aktuelle Frage verschickt, nie die Lösung vor dem Auflösen. */
+function buildView(pid){
+  const r = H.room, qi = r.qIndex;
+  const vm = {
+    type:'state',
+    room:{ title:r.title, timeLimit:r.timeLimit, count:r.count, status:r.status, qIndex:qi,
+           question: qi>=0 ? r.questions[qi] : null, revealed:r.revealed },
+    players: hostScores(),
+    answeredCount: qi>=0 ? Object.values(H.players).filter(p=>p.answers[qi]).length : 0,
+    counts: null, me: null
+  };
+  if (qi>=0 && r.revealed[qi]!=null) {
+    vm.counts = r.questions[qi].a.map((_,i)=>Object.values(H.players).filter(p=>p.answers[qi] && p.answers[qi].c===i).length);
+  }
+  if (pid && H.players[pid]) {
+    const a = qi>=0 ? H.players[pid].answers[qi] : null;
+    vm.me = { id:pid, answer: a ? {c:a.c, pts: r.revealed[qi]!=null ? qPoints(a, r.revealed[qi], r.timeLimit) : null} : null };
+  }
+  return vm;
+}
+
+function broadcast(){
+  for (const [pid,conn] of Object.entries(H.conns)) {
+    if (conn.open) { try { conn.send(buildView(pid)); } catch(e){} }
+  }
+  saveHost();
+  render();
+}
+
+function saveHost(){
+  store('qd:host', {code:H.code, room:H.room, correct:H.correct, players:H.players, qStartedAt:H.qStartedAt, savedAt:now()});
+}
+
+function createHostPeer(code, onOpen, onTaken){
+  const peer = new Peer(PEER_PREFIX + code, PEER_OPTS);
+  peer.on('open', () => onOpen(peer));
+  peer.on('error', err => {
+    if (err.type === 'unavailable-id') { peer.destroy(); onTaken(); return; }
+    if (H && H.peer === peer) {
+      if (['network','server-error','socket-error','socket-closed'].includes(err.type)) {
+        S.msg = 'Die Verbindung zum Vermittlungsserver ist gestört. Neue Mitspieler können gerade nicht beitreten, das Spiel läuft aber weiter.';
+        render();
+      }
+    } else {
+      S.busy = false;
+      S.msg = 'Der Raum konnte nicht geöffnet werden. Prüfe deine Internetverbindung und versuch es erneut.';
+      render();
+    }
+  });
+  peer.on('disconnected', () => { if (!peer.destroyed) setTimeout(()=>{ try{ peer.reconnect(); }catch(e){} }, 2000); });
+  peer.on('connection', conn => hostHandleConn(conn));
+  return peer;
+}
+
+function startHosting(data){
+  H = Object.assign({ peer:null, conns:{}, lastSeen:{}, qSeenLocal:{} }, data);
+  S.view = 'host'; S.busy = false; S.msg = ''; S.info = '';
+  saveHost();
+  render();
+}
+
+function openRoom(){
+  const st = S.setup, qs = [];
+  for (let i=0;i<st.questions.length;i++){
+    const q = st.questions[i], text=(q.q||'').trim();
+    const idx = [0,1,2,3].filter(j=>(q.a[j]||'').trim());
+    if (!text){ S.msg=`Frage ${i+1} hat noch keinen Text.`; render(); return; }
+    if (idx.length<2){ S.msg=`Frage ${i+1} braucht mindestens zwei Antworten.`; render(); return; }
+    if (!idx.includes(q.c)){ S.msg=`Bei Frage ${i+1} ist keine ausgefüllte Antwort als richtig markiert.`; render(); return; }
+    qs.push({q:text, a:idx.map(j=>q.a[j].trim()), c:idx.indexOf(q.c)});
+  }
+  if (typeof Peer === 'undefined'){ S.msg='PeerJS konnte nicht geladen werden. Prüfe deine Internetverbindung.'; render(); return; }
+  S.busy = true; S.msg=''; render();
+  let tries = 0;
+  const attempt = () => {
+    const code = rid(5);
+    createHostPeer(code, peer => {
+      startHosting({
+        code, peer, correct: qs.map(q=>q.c), players:{}, qStartedAt:0,
+        room:{ title:(st.title||'Quiz').trim(), timeLimit:st.time, count:qs.length, status:'lobby', qIndex:-1,
+               questions: qs.map(({q,a})=>({q,a})), revealed:{} }
+      });
+    }, () => { if (++tries<5) attempt(); else { S.busy=false; S.msg='Es wurde kein freier Raumcode gefunden. Versuch es erneut.'; render(); } });
+  };
+  attempt();
+}
+
+function restoreHost(){
+  const saved = load('qd:host'); if (!saved) return;
+  if (typeof Peer === 'undefined'){ S.msg='PeerJS konnte nicht geladen werden. Prüfe deine Internetverbindung.'; render(); return; }
+  S.busy = true; S.msg=''; S.info = `Raum ${saved.code} wird wiederhergestellt …`; render();
+  let tries = 0;
+  const attempt = () => {
+    createHostPeer(saved.code, peer => {
+      const qSeenLocal = {};
+      startHosting({ code:saved.code, peer, correct:saved.correct, players:saved.players, room:saved.room, qStartedAt:saved.qStartedAt||0 });
+      if (H.room.status==='question') H.qSeenLocal[H.room.qIndex] = H.qStartedAt;
+      S.info = 'Raum wiederhergestellt. Mitspieler verbinden sich automatisch neu.';
+      render();
+      setTimeout(()=>{ if (S.info.startsWith('Raum wiederhergestellt')) { S.info=''; render(); } }, 6000);
+    }, () => {
+      // Der alte Code ist beim Server noch kurz reserviert – etwas warten und erneut versuchen
+      if (++tries < 20) { S.info = `Raum ${saved.code} wird wiederhergestellt … (Versuch ${tries+1})`; render(); setTimeout(attempt, 3000); }
+      else { S.busy=false; S.info=''; S.msg='Der Raum konnte nicht wiederhergestellt werden. Öffne bitte einen neuen Raum.'; render(); }
+    });
+  };
+  attempt();
+}
+
+function hostHandleConn(conn){
+  let pid = null;
+  conn.on('data', raw => {
+    const m = raw || {};
+    if (m.type === 'join') {
+      pid = String(m.pid||'').slice(0,40);
+      const nick = String(m.nick||'').trim().slice(0,20) || 'Gast';
+      if (!pid) return;
+      if (H.conns[pid] && H.conns[pid] !== conn) { try{ H.conns[pid].close(); }catch(e){} }
+      H.conns[pid] = conn;
+      H.lastSeen[pid] = now();
+      if (!H.players[pid]) H.players[pid] = {nick, answers:{}, joinedAt:now()};
+      else H.players[pid].nick = nick;
+      broadcast();
+    } else if (m.type === 'answer' && pid && H.players[pid]) {
+      const r = H.room, qi = r.qIndex, p = H.players[pid];
+      if (r.status!=='question' || m.qi!==qi || p.answers[qi]) return;
+      const c = Number(m.c);
+      if (!Number.isInteger(c) || c<0 || c>=r.questions[qi].a.length) return;
+      const elapsed = now() - H.qStartedAt;
+      if (elapsed > r.timeLimit*1000 + 1500) return;
+      const ms = Math.max(0, Math.min(Number(m.ms)||elapsed, elapsed, r.timeLimit*1000));
+      p.answers[qi] = {c, ms};
+      broadcast();
+    } else if (m.type === 'ping' && pid) {
+      H.lastSeen[pid] = now();
+    }
+  });
+  conn.on('close', () => { if (pid && H && H.conns[pid]===conn){ delete H.conns[pid]; broadcast(); } });
+  conn.on('error', () => {});
+}
+
+const hostActions = {
+  start(){ H.room.status='question'; H.room.qIndex=0; H.qStartedAt=now(); H.qSeenLocal[0]=H.qStartedAt; broadcast(); },
+  reveal(){ const qi=H.room.qIndex; H.room.revealed[qi]=H.correct[qi]; H.room.status='reveal'; broadcast(); },
+  board(){ H.room.status='board'; broadcast(); },
+  next(){
+    const r=H.room;
+    if (r.qIndex+1 < r.count){ r.status='question'; r.qIndex++; H.qStartedAt=now(); H.qSeenLocal[r.qIndex]=H.qStartedAt; }
+    else r.status='finished';
+    broadcast();
+  },
+  closeRoom(){
+    for (const conn of Object.values(H.conns)) { try{ conn.send({type:'closed'}); }catch(e){} }
+    const peer = H.peer;
+    setTimeout(()=>{ try{ peer.destroy(); }catch(e){} }, 400);
+    H = null; store('qd:host', null);
+    S.view='home'; S.msg=''; S.info=''; render();
+  },
+  async copyLink(){
+    const link = joinLinkFor(H.code);
+    try { await navigator.clipboard.writeText(link); S.info='Link kopiert.'; }
+    catch(e){ S.info='Kopieren hat nicht geklappt. Markiere den Link und kopiere ihn von Hand.'; }
+    render(); setTimeout(()=>{ S.info=''; render(); }, 2500);
+  }
+};
+
+function joinLinkFor(code){ return location.origin + location.pathname + '?code=' + code; }
+
+/* =========================================================
+   MITSPIELER
+   ========================================================= */
+function joinRoom(){
+  const code = S.joinCode.trim().toUpperCase();
+  const name = S.joinName.trim();
+  if (code.length!==5){ S.msg='Der Raumcode hat fünf Zeichen.'; render(); return; }
+  if (!name){ S.msg='Gib einen Namen ein, damit dich die anderen erkennen.'; S.focusSel='[data-bind="joinName"]'; render(); return; }
+  if (typeof Peer === 'undefined'){ S.msg='PeerJS konnte nicht geladen werden. Prüfe deine Internetverbindung.'; render(); return; }
+  store('qd:name', name);
+  let pid = load('qd:pid'); if (!pid){ pid = 'p' + rid(12); store('qd:pid', pid); }
+  leavePlayer(false);
+  P = { pid, code, name, peer:null, conn:null, vm:null, everConnected:false, conn_state:'connecting',
+        lastMsg:0, qSeen:{}, timeUp:{}, pending:null, retries:0, retryTimer:null, connectTimer:null };
+  S.busy = true; S.msg=''; render();
+  P.peer = new Peer(PEER_OPTS);
+  const myPeer = P.peer;
+  myPeer.on('open', () => { if (P && P.peer===myPeer) connectToHost(); });
+  myPeer.on('error', err => {
+    if (!P || P.peer!==myPeer) return;
+    if (err.type === 'peer-unavailable') {
+      if (!P.everConnected) { const c=P.code; leavePlayer(false); S.busy=false; S.msg=`Es gibt keinen offenen Raum mit dem Code ${c}. Prüfe die Schreibweise.`; render(); }
+      else scheduleReconnect();
+    } else if (['network','server-error','socket-error','socket-closed','disconnected'].includes(err.type)) {
+      if (!P.everConnected) { leavePlayer(false); S.busy=false; S.msg='Keine Verbindung zum Vermittlungsserver. Prüfe deine Internetverbindung.'; render(); }
+      else scheduleReconnect();
+    }
+  });
+  myPeer.on('disconnected', () => { if (P && P.peer===myPeer && !myPeer.destroyed) setTimeout(()=>{ try{ myPeer.reconnect(); }catch(e){} }, 2000); });
+}
+
+function connectToHost(){
+  if (!P) return;
+  clearTimeout(P.connectTimer);
+  if (P.conn) { try{ P.conn.close(); }catch(e){} }
+  const conn = P.peer.connect(PEER_PREFIX + P.code, {reliable:true, serialization:'json'});
+  P.conn = conn;
+  P.connectTimer = setTimeout(() => {
+    if (!P || P.conn!==conn || conn.open) return;
+    if (!P.everConnected) { leavePlayer(false); S.busy=false; S.msg='Die Verbindung zum Raum dauert zu lange. Möglicherweise blockiert dein Netzwerk direkte Verbindungen – probier es z. B. über mobile Daten.'; render(); }
+    else scheduleReconnect();
+  }, 15000);
+  conn.on('open', () => {
+    if (!P || P.conn!==conn) return;
+    clearTimeout(P.connectTimer);
+    P.everConnected = true; P.conn_state='open'; P.retries=0; P.lastMsg=now();
+    conn.send({type:'join', pid:P.pid, nick:P.name});
+    store('qd:player', {code:P.code, name:P.name});
+    S.view='player'; S.busy=false; S.msg='';
+    render();
+  });
+  conn.on('data', m => {
+    if (!P || P.conn!==conn || !m) return;
+    P.lastMsg = now();
+    if (m.type==='state') {
+      P.vm = m;
+      const r = m.room;
+      if (r.status==='question' && P.qSeen[r.qIndex]==null) P.qSeen[r.qIndex]=now();
+      if (P.pending && (r.qIndex!==P.pending.qi || (m.me && m.me.answer))) P.pending=null;
+      render();
+    } else if (m.type==='closed') {
+      leavePlayer(true); S.msg='Der Spielleiter hat den Raum geschlossen.'; render();
+    }
+  });
+  conn.on('close', () => { if (P && P.conn===conn) scheduleReconnect(); });
+  conn.on('error', () => { if (P && P.conn===conn) scheduleReconnect(); });
+}
+
+function scheduleReconnect(){
+  if (!P || P.retryTimer) return;
+  P.conn_state = 'lost'; render();
+  P.retries++;
+  if (P.retries > 40) { leavePlayer(false); S.msg='Die Verbindung zum Raum ist abgebrochen. Du kannst über „Zurück in Raum …“ erneut beitreten.'; render(); return; }
+  P.retryTimer = setTimeout(() => {
+    if (!P) return;
+    P.retryTimer = null;
+    if (P.peer.destroyed) { joinRoom(); return; }
+    if (P.peer.disconnected) { try{ P.peer.reconnect(); }catch(e){} setTimeout(connectToHost, 1500); }
+    else connectToHost();
+  }, 3000);
+}
+
+function leavePlayer(clearResume){
+  if (P) {
+    clearTimeout(P.retryTimer); clearTimeout(P.connectTimer);
+    const peer = P.peer; P = null;
+    try{ peer && peer.destroy(); }catch(e){}
+  }
+  if (clearResume) store('qd:player', null);
+  S.view = 'home';
+}
+
+function sendAnswer(i){
+  const vm = P && P.vm; if (!vm) return;
+  const r = vm.room, qi = r.qIndex;
+  if (r.status!=='question' || (vm.me && vm.me.answer) || (P.pending && P.pending.qi===qi) || timeLeft(r, P.qSeen)<=0) return;
+  const ms = now() - P.qSeen[qi];
+  P.pending = {qi, c:i};
+  try { P.conn.send({type:'answer', qi, c:i, ms}); } catch(e){ P.pending=null; }
+  render();
+}
+
+/* ---------- Heartbeat ---------- */
+setInterval(() => {
+  if (P && P.conn && P.conn.open) {
+    try{ P.conn.send({type:'ping'}); }catch(e){}
+    if (now() - P.lastMsg > 15000) { try{ P.conn.close(); }catch(e){} scheduleReconnect(); }
+  }
+  if (H) {
+    let changed = false;
+    for (const [pid,conn] of Object.entries(H.conns)) {
+      try{ conn.send({type:'ping'}); }catch(e){}
+      if (now() - (H.lastSeen[pid]||0) > 15000) { try{ conn.close(); }catch(e){} delete H.conns[pid]; changed = true; }
+    }
+    if (changed) broadcast();
+  }
+}, 4000);
+
+window.addEventListener('beforeunload', e => {
+  if (H && H.room.status!=='lobby' && H.room.status!=='finished') { e.preventDefault(); e.returnValue=''; }
+});
+
+/* =========================================================
+   ANZEIGE
+   ========================================================= */
+function timeLeft(r, seenMap){
+  const seen = seenMap[r.qIndex] ?? now();
+  return (r.timeLimit*1000 - (now()-seen))/1000;
+}
+function sortedStandings(players){
+  return [...players].sort((a,b)=> b.s-a.s || b.correct-a.correct || String(a.nick).localeCompare(String(b.nick),'de'));
+}
+
+function render(){
+  let h;
+  if (S.view==='setup') h = viewSetup();
+  else if (S.view==='host' && H) h = viewGame(buildView(null), true);
+  else if (S.view==='player' && P && P.vm) h = viewGame(P.vm, false);
+  else if (S.view==='player' && P) h = headerRoom(P.code) + `<p class="muted">Verbinde mit dem Raum …</p>`;
+  else h = viewHome();
+  $app.innerHTML = h;
+  if (S.focusSel){ const el=$app.querySelector(S.focusSel); if(el){ el.focus(); } S.focusSel=null; }
+}
+
+const logo = `<div class="logo"><i><b></b><b></b><b></b><b></b></i>Quizduell</div>`;
+const notices = () => (S.msg?`<div class="notice" role="alert">${esc(S.msg)}</div>`:'') + (S.info?`<div class="notice info" role="status">${esc(S.info)}</div>`:'');
+function headerRoom(code){
+  return `<header class="bar">${logo}<span class="spacer"></span><span class="roomtag">Raum <b>${esc(code)}</b></span>
+    <button class="linkbtn" data-act="${H?'hostLeave':'leave'}">${H?'Raum schließen':'Verlassen'}</button></header>`;
+}
+
+function viewHome(){
+  const hostSaved = load('qd:host');
+  const playerSaved = load('qd:player');
+  const fresh = s => s && now() - (s.savedAt||0) < 6*3600*1000;
+  let resume = '';
+  if (fresh(hostSaved) && hostSaved.room.status!=='finished') resume += `<button class="btn ghost small" data-act="restoreHost" ${S.busy?'disabled':''}>Raum ${esc(hostSaved.code)} als Spielleiter wiederherstellen</button> `;
+  if (playerSaved) resume += `<button class="btn ghost small" data-act="resumePlayer" ${S.busy?'disabled':''}>Zurück in Raum ${esc(playerSaved.code)}</button>`;
+  return `<header class="bar">${logo}</header>
+  <h1>Ein Code, alle Fragen, eine Rangliste.</h1>
+  <p class="lead">Der Spielleiter öffnet einen Raum und gibt den Code weiter. Alle, die ihn eingeben, spielen dieselben Fragen gleichzeitig.</p>
+  ${notices()}
+  ${resume?`<p style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap">${resume}</p>`:''}
+  <div class="split">
+    <section class="panel">
+      <h2>Mitspielen</h2>
+      <label>Raumcode<input type="text" class="codeinput" data-bind="joinCode" data-enter="join" maxlength="5" autocomplete="off" spellcheck="false" value="${esc(S.joinCode)}" placeholder="·····"></label>
+      <label>Dein Name<input type="text" data-bind="joinName" data-enter="join" maxlength="20" autocomplete="nickname" value="${esc(S.joinName)}" placeholder="So sehen dich die anderen"></label>
+      <button class="btn wide" data-act="join" ${S.busy?'disabled':''}>${S.busy?'Verbinde …':'Raum betreten'}</button>
+    </section>
+    <section class="panel">
+      <h2>Spiel leiten</h2>
+      <p class="muted">Stell deine Fragen zusammen und öffne einen Raum. Lass diesen Tab während des Spiels geöffnet – dein Browser verbindet alle Mitspieler.</p>
+      <button class="btn ghost wide" data-act="goSetup">Fragen vorbereiten</button>
+    </section>
+  </div>`;
+}
+
+function viewSetup(){
+  const st = S.setup;
+  const cards = st.questions.map((q,qi)=>`
+    <section class="panel qcard">
+      <div class="top"><strong>Frage ${qi+1}</strong><span class="spacer"></span>
+        <button class="linkbtn" data-act="delQ" data-q="${qi}" ${st.questions.length<2?'disabled':''} aria-label="Frage ${qi+1} löschen">Löschen</button></div>
+      <textarea data-q="${qi}" data-f="q" rows="2" aria-label="Fragetext ${qi+1}" placeholder="Wie lautet die Frage?">${esc(q.q)}</textarea>
+      ${[0,1,2,3].map(ai=>`<div class="arow">
+        <input type="radio" name="c-${qi}" data-q="${qi}" data-correct="${ai}" ${q.c===ai?'checked':''} aria-label="Antwort ${LETTERS[ai]} ist richtig">
+        <input type="text" data-q="${qi}" data-a="${ai}" maxlength="80" value="${esc(q.a[ai]||'')}" placeholder="Antwort ${LETTERS[ai]}${ai>1?' (optional)':''}">
+      </div>`).join('')}
+    </section>`).join('');
+  return `<header class="bar">${logo}<span class="spacer"></span><button class="linkbtn" data-act="home">Zur Startseite</button></header>
+  <h2>Fragen vorbereiten</h2>
+  <p class="muted">Markiere mit dem Kreis die richtige Antwort. Deine Fragen bleiben in diesem Browser gespeichert. Die Lösungen verlassen deinen Browser erst beim Auflösen.</p>
+  ${notices()}
+  <section class="panel setuphead">
+    <label style="margin:0">Name des Quiz<input type="text" data-bind="title" maxlength="60" value="${esc(st.title)}"></label>
+    <label style="margin:0">Zeit pro Frage<select data-bind="time">${[10,15,20,30,45].map(t=>`<option value="${t}" ${st.time===t?'selected':''}>${t} Sekunden</option>`).join('')}</select></label>
+  </section>
+  ${cards}
+  <p style="margin-top:14px"><button class="btn ghost" data-act="addQ">Frage hinzufügen</button></p>
+  <div class="controls">
+    <div class="info">${st.questions.length} ${st.questions.length===1?'Frage':'Fragen'}</div>
+    <button class="btn" data-act="openRoom" ${S.busy?'disabled':''}>${S.busy?'Raum wird geöffnet …':'Raum öffnen'}</button>
+  </div>`;
+}
+
+function viewGame(vm, isHost){
+  const code = isHost ? H.code : P.code;
+  let banner = '';
+  if (!isHost && P.conn_state==='lost') banner = `<div class="notice info" role="status">Verbindung unterbrochen – wird wiederhergestellt …</div>`;
+  const r = vm.room;
+  let body;
+  if (r.status==='lobby') body = viewLobby(vm,isHost,code);
+  else if (r.status==='question') body = viewQuestion(vm,isHost);
+  else if (r.status==='reveal') body = viewReveal(vm,isHost);
+  else body = viewBoard(vm,isHost,r.status==='finished');
+  return headerRoom(code) + notices() + banner + body;
+}
+
+function chipList(players, myId){
+  if (!players.length) return `<p class="muted">Noch niemand da.</p>`;
+  const sorted = [...players].sort((a,b)=>(a.joinedAt||0)-(b.joinedAt||0));
+  return `<ul class="chips">${sorted.map(p=>`<li class="${p.id===myId?'me':''} ${p.connected?'':'off'}" title="${p.connected?'verbunden':'nicht verbunden'}">${esc(p.nick)}${p.id===myId?' (du)':''}</li>`).join('')}</ul>`;
+}
+
+function viewLobby(vm,isHost,code){
+  const r = vm.room, n = vm.players.length;
+  if (isHost) return `<div class="center">
+      <h2>${esc(r.title)}</h2>
+      <p class="lead" style="margin:0 auto">Gib diesen Code oder den Link an deine Mitspieler weiter.</p>
+      <div class="codebig" aria-label="Raumcode ${esc(code)}">${[...code].map(ch=>`<span>${esc(ch)}</span>`).join('')}</div>
+      <div class="joinlink"><code>${esc(joinLinkFor(code))}</code><button class="btn ghost small" data-act="copyLink">Link kopieren</button></div>
+    </div>
+    <h3>Im Raum: ${n}</h3>${chipList(vm.players,null)}
+    <div class="controls">
+      <div class="info">${r.count} Fragen, je ${r.timeLimit} Sekunden</div>
+      <button class="btn" data-act="start" ${n===0?'disabled':''}>Spiel starten</button>
+    </div>`;
+  return `<div class="center" style="margin-top:20px">
+      <h1 style="margin:0 auto 10px">Du bist drin.</h1>
+      <p class="lead" style="margin:0 auto">Gleich geht es los. „${esc(r.title)}“ hat ${r.count} Fragen, du hast jeweils ${r.timeLimit} Sekunden.</p>
+    </div>
+    <h3>Im Raum: ${n}</h3>${chipList(vm.players, vm.me && vm.me.id)}`;
+}
+
+function qHeader(r, seen, withTimer){
+  const left = Math.max(0,timeLeft(r, seen));
+  const timer = withTimer ? `<span class="timer" id="tnum">${Math.ceil(left)}</span>` : '';
+  return `<div class="qmeta"><span>Frage ${r.qIndex+1} von ${r.count}</span>${timer}</div>
+    ${withTimer?`<div class="timebar ${left<=5?'low':''}"><i id="tfill" style="width:${left/r.timeLimit*100}%"></i></div>`:''}`;
+}
+
+function viewQuestion(vm,isHost){
+  const r = vm.room, Q = r.question, seen = isHost ? H.qSeenLocal : P.qSeen;
+  const left = timeLeft(r, seen);
+  if (isHost) {
+    return qHeader(r,seen,true) + `<h2 class="question">${esc(Q.q)}</h2>
+      <div class="answers">${Q.a.map((t,i)=>`<div class="ans"><span class="letter">${LETTERS[i]}</span><span class="txt">${esc(t)}</span></div>`).join('')}</div>
+      <div class="controls">
+        <div class="info">${vm.answeredCount} von ${vm.players.length} haben geantwortet</div>
+        <button class="btn" data-act="reveal">Auflösen</button>
+      </div>`;
+  }
+  const mine = (vm.me && vm.me.answer) || (P.pending && P.pending.qi===r.qIndex ? P.pending : null);
+  const locked = !!mine || left<=0 || P.conn_state!=='open';
+  const status = mine ? 'Antwort abgegeben. Warte auf die Auflösung.' : left<=0 ? 'Die Zeit ist abgelaufen.' : 'Tippe auf deine Antwort.';
+  return qHeader(r,seen,true) + `<h2 class="question">${esc(Q.q)}</h2>
+    <div class="answers">${Q.a.map((t,i)=>`<button class="ans ${mine?(mine.c===i?'picked':'dim'):(left<=0?'dim':'')}" data-act="answer" data-i="${i}" ${locked?'disabled':''}><span class="letter">${LETTERS[i]}</span><span class="txt">${esc(t)}</span></button>`).join('')}</div>
+    <p class="status" role="status">${status}</p>`;
+}
+
+function viewReveal(vm,isHost){
+  const r = vm.room, Q = r.question, correct = r.revealed[r.qIndex], counts = vm.counts || [];
+  const tiles = `<div class="answers">${Q.a.map((t,i)=>`<div class="ans ${i===correct?'correct':'dim'}"><span class="letter">${i===correct?'✓':LETTERS[i]}</span><span class="txt">${esc(t)}</span><span class="count" aria-label="${counts[i]||0} Stimmen">${counts[i]||0}</span></div>`).join('')}</div>`;
+  let extra;
+  if (isHost) {
+    const last = r.qIndex+1 >= r.count;
+    extra = `<div class="controls">
+      <div class="info">${counts[correct]||0} von ${vm.players.length} lagen richtig</div>
+      <button class="btn ghost" data-act="board">Rangliste zeigen</button>
+      <button class="btn" data-act="next">${last?'Endergebnis zeigen':'Nächste Frage'}</button>
+    </div>`;
+  } else {
+    const a = vm.me && vm.me.answer;
+    extra = !a ? `<div class="result bad">Keine Antwort abgegeben.</div>`
+      : a.pts>0 ? `<div class="result good">Richtig! +${a.pts} Punkte</div>`
+      : `<div class="result bad">Leider daneben.</div>`;
+  }
+  return qHeader(r,{},false) + `<h2 class="question">${esc(Q.q)}</h2>` + tiles + extra;
+}
+
+function viewBoard(vm,isHost,final){
+  const r = vm.room, st = sortedStandings(vm.players);
+  const myId = vm.me && vm.me.id;
+  const myIdx = st.findIndex(x=>x.id===myId);
+  const done = Object.keys(r.revealed).length;
+  let top;
+  if (final) {
+    const slot = (x,cls,place) => x ? `<div class="${cls}"><div class="pname">${esc(x.nick)}</div><div class="ppts">${x.s} Punkte</div><div class="block">${place}</div></div>` : `<div class="${cls}"></div>`;
+    top = `<h1 class="center" style="margin:0 auto 6px">Endergebnis</h1>
+      ${!isHost && myIdx>=0 ? `<p class="lead center" style="margin:0 auto">Du bist auf Platz ${myIdx+1} von ${st.length}.</p>`:''}
+      <div class="podium">${slot(st[1],'p2',2)}${slot(st[0],'p1',1)}${slot(st[2],'p3',3)}</div>`;
+  } else {
+    top = `<div class="qmeta"><span>Rangliste nach ${done} von ${r.count} Fragen</span></div>
+      <h2 class="question">${!isHost && myIdx>=0 ? `Du bist auf Platz ${myIdx+1}.` : 'Zwischenstand'}</h2>`;
+  }
+  const list = `<ol class="board">${st.map((x,i)=>`<li class="${x.id===myId?'me':''}"><span class="rank">${i+1}</span><span class="name">${esc(x.nick)}<span class="sub">${x.correct} richtig</span></span><span class="pts">${x.s}</span></li>`).join('')}</ol>`;
+  let ctr = '';
+  if (isHost && !final) {
+    const last = r.qIndex+1 >= r.count;
+    ctr = `<div class="controls"><div class="info">${vm.players.length} Mitspieler</div>
+      <button class="btn" data-act="next">${last?'Endergebnis zeigen':'Nächste Frage'}</button></div>`;
+  } else if (isHost) {
+    ctr = `<div class="controls"><div class="info">Spiel beendet</div><button class="btn ghost" data-act="closeRoom">Raum schließen</button></div>`;
+  } else if (final) {
+    ctr = `<p style="margin-top:22px"><button class="btn ghost" data-act="leave">Zur Startseite</button></p>`;
+  }
+  return top + list + ctr;
+}
+
+/* =========================================================
+   EREIGNISSE
+   ========================================================= */
+function saveSetup(){ store('qd:setup', S.setup); }
+
+const actions = {
+  goSetup(){ S.view='setup'; S.msg=''; render(); window.scrollTo(0,0); },
+  home(){ S.view='home'; S.msg=''; render(); },
+  addQ(){ S.setup.questions.push({q:'',a:['','','',''],c:0}); saveSetup(); S.focusSel=`textarea[data-q="${S.setup.questions.length-1}"]`; render(); },
+  delQ(el){ S.setup.questions.splice(+el.dataset.q,1); saveSetup(); render(); },
+  openRoom(){ openRoom(); },
+  restoreHost(){ restoreHost(); },
+  join(){ joinRoom(); },
+  resumePlayer(){ const s=load('qd:player'); if(!s) return; S.joinCode=s.code; S.joinName=s.name; joinRoom(); },
+  leave(){ leavePlayer(true); S.msg=''; render(); },
+  hostLeave(){ if (confirm('Raum wirklich schließen? Das Spiel endet dann für alle.')) hostActions.closeRoom(); },
+  answer(el){ sendAnswer(+el.dataset.i); },
+  start(){ hostActions.start(); }, reveal(){ hostActions.reveal(); }, board(){ hostActions.board(); },
+  next(){ hostActions.next(); }, closeRoom(){ hostActions.closeRoom(); }, copyLink(){ hostActions.copyLink(); }
+};
+
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]');
+  if (!el || el.disabled) return;
+  const fn = actions[el.dataset.act];
+  if (fn) fn(el);
+});
+document.addEventListener('input', e => {
+  const el = e.target;
+  if (el.dataset.bind==='joinCode') S.joinCode = el.value.toUpperCase().replace(/[^A-Z0-9]/g,'');
+  else if (el.dataset.bind==='joinName') S.joinName = el.value;
+  else if (el.dataset.bind==='title'){ S.setup.title = el.value; saveSetup(); }
+  else if (el.dataset.q!=null && el.dataset.f==='q'){ S.setup.questions[+el.dataset.q].q = el.value; saveSetup(); }
+  else if (el.dataset.q!=null && el.dataset.a!=null){ S.setup.questions[+el.dataset.q].a[+el.dataset.a] = el.value; saveSetup(); }
+});
+document.addEventListener('change', e => {
+  const el = e.target;
+  if (el.dataset.bind==='time'){ S.setup.time = +el.value; saveSetup(); }
+  else if (el.dataset.correct!=null){ S.setup.questions[+el.dataset.q].c = +el.dataset.correct; saveSetup(); }
+});
+document.addEventListener('keydown', e => {
+  const el = e.target;
+  if (e.key==='Enter' && el.dataset && el.dataset.enter && actions[el.dataset.enter]) { e.preventDefault(); actions[el.dataset.enter](el); }
+});
+
+/* Countdown flüssig aktualisieren, ohne die ganze Seite neu zu zeichnen */
+setInterval(() => {
+  let r, seen, timeUp;
+  if (S.view==='host' && H) { r=H.room; seen=H.qSeenLocal; timeUp=H; }
+  else if (S.view==='player' && P && P.vm) { r=P.vm.room; seen=P.qSeen; timeUp=P; }
+  else return;
+  if (r.status!=='question') return;
+  const left = timeLeft(r, seen);
+  const num = document.getElementById('tnum'), fill = document.getElementById('tfill');
+  if (num) num.textContent = Math.ceil(Math.max(0,left));
+  if (fill){ fill.style.width=(Math.max(0,left)/r.timeLimit*100)+'%'; fill.parentElement.classList.toggle('low', left<=5); }
+  timeUp.timeUp = timeUp.timeUp || {};
+  if (left<=0 && !timeUp.timeUp[r.qIndex]) { timeUp.timeUp[r.qIndex]=true; render(); }
+}, 200);
+
+if (typeof Peer === 'undefined') S.msg = 'PeerJS konnte nicht geladen werden. Prüfe deine Internetverbindung und lade die Seite neu.';
+render();
+</script>
+</body>
+</html>
